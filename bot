@@ -1,0 +1,59 @@
+import telebot
+
+token = '5716804924:AAH5i5_PJ4GsRIFNS7xoNa1EtUKnck62nno'
+
+bot = telebot.TeleBot(token)
+
+RANDOM_TASKS = ["Записаться на курс в Нетологию", "Написать Гвидо письмо", "Покормить кошку", "Помыть машину"]
+
+HELP = """
+/help - вывети список доступных команд
+/add, /todo - добавить задачу в список (название задачи запрашиваем у пользователя)
+/show, /print - напечатать все добавленные задачи
+/random - добавить случайную задачу на дату Сегодня"""
+
+@bot.message_handler(commands=['help'])
+def help(message):
+    bot.send_message(message.chat.id, HELP)
+
+tasks = {}
+
+def add_todo(date, task):
+  if date in tasks:
+      tasks[date].append(task)
+  else:
+      tasks[date] = []
+      tasks[date].append(task)
+
+@bot.message_handler(commands=['add', 'todo'])
+def add(message):
+    command = message.text.split(maxsplit=2)
+    date = command[1].lower()
+    task = command[2]
+    add_todo(date, task)
+    text = 'Задача ' + task + ' добавлена на дату ' + date
+    bot.send_message(message.chat.id, text)
+
+@bot.message_handler(commands=['random'])
+def random_add(message):
+    date = 'сегодня'
+    task = choice(RANDOM_TASKS)
+    add_todo(date, task)
+    text = 'Задача ' + task + ' добавлена на дату ' + date
+    bot.send_message(message.chat.id, text)
+
+@bot.message_handler(commands=['show', 'print'])
+def show(message): # message.text = /print <date>
+    command = message.text.split(maxsplit=1)
+    date = command[1].lower()
+    text = ''
+    if date in tasks:
+        text = date.upper() + '\n'
+        for task in tasks[date]:
+            text = text + '[] ' + task + '\n'
+    else:
+        text = "Задач на эту дату нет"
+    bot.send_message(message.chat.id, text)
+
+
+bot.polling(none_stop=True)
